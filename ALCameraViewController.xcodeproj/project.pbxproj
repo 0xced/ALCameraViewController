@@ -172,7 +172,10 @@
 				C4829FFC1CAEB16C00541D08 /* CameraViewController */,
 				FAF058401B31618D008E5592 /* Products */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
+			usesTabs = 0;
 		};
 		FAF058401B31618D008E5592 /* Products */ = {
 			isa = PBXGroup;
