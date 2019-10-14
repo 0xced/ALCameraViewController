@@ -498,7 +498,7 @@ open class CameraViewController: UIViewController {
      * the picture on the device.
      */
     internal func capturePhoto() {
-        guard let output = cameraView.imageOutput,
+        guard let output = cameraView.photoOutput,
             let connection = output.connection(with: AVMediaType.video) else {
             return
         }
@@ -565,11 +565,7 @@ open class CameraViewController: UIViewController {
     internal func toggleFlash() {
         cameraView.cycleFlash()
         
-        guard let device = cameraView.device else {
-            return
-        }
-  
-        let image = UIImage(named: flashImage(device.flashMode),
+        let image = UIImage(named: flashImage(cameraView.settings.flashMode),
                             in: CameraGlobals.shared.bundle,
                             compatibleWith: nil)
         
