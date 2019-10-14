@@ -9,13 +9,20 @@
 import UIKit
 import AVFoundation
 
-public class CameraView: UIView {
+public typealias CameraShotCompletion = (UIImage?) -> Void
+
+public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
     
     var session: AVCaptureSession!
     var input: AVCaptureDeviceInput!
     var device: AVCaptureDevice!
-    var imageOutput: AVCaptureStillImageOutput!
+    // TODO: how to make this properly configurable?
+    var deviceType: AVCaptureDevice.DeviceType = .builtInDualCamera
+    var settings: AVCapturePhotoSettings!
+    var photoOutput: AVCapturePhotoOutput!
     var preview: AVCaptureVideoPreviewLayer!
+    
+    private var cameraShotCompletion: CameraShotCompletion?
     
     let cameraQueue = DispatchQueue(label: "com.zero.ALCameraViewController.Queue")
 
@@ -23,18 +30,9 @@ public class CameraView: UIView {
     
     public func startSession() {
         session = AVCaptureSession()
-        session.sessionPreset = AVCaptureSession.Preset.photo
+        session.sessionPreset = .photo
 
-        device = cameraWithPosition(position: currentPosition)
-        if let device = device , device.hasFlash {
-            do {
-                try device.lockForConfiguration()
-                device.flashMode = .auto
-                device.unlockForConfiguration()
-            } catch _ {}
-        }
-
-        let outputSettings = [AVVideoCodecKey: AVVideoCodecJPEG]
+        device = AVCaptureDevice.default(self.deviceType, for: AVMediaType.video, position: self.currentPosition)
 
         do {
             input = try AVCaptureDeviceInput(device: device)
@@ -48,10 +46,11 @@ public class CameraView: UIView {
             session.addInput(input)
         }
 
-        imageOutput = AVCaptureStillImageOutput()
-        imageOutput.outputSettings = outputSettings
+        photoOutput = AVCapturePhotoOutput()
+        session.addOutput(photoOutput)
 
-        session.addOutput(imageOutput)
+        settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
+        settings.flashMode = .auto
 
         cameraQueue.sync {
             session.startRunning()
@@ -69,7 +68,8 @@ public class CameraView: UIView {
             
             session = nil
             input = nil
-            imageOutput = nil
+            settings = nil
+            photoOutput = nil
             preview = nil
             device = nil
         }
@@ -125,28 +125,45 @@ public class CameraView: UIView {
         layer.addSublayer(preview)
     }
     
-    private func cameraWithPosition(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
-        let devices = AVCaptureDevice.devices(for: AVMediaType.video)
-        return devices.filter { $0.position == position }.first
-    }
-    
     public func capturePhoto(completion: @escaping CameraShotCompletion) {
         isUserInteractionEnabled = false
 
-        guard let output = imageOutput, let orientation = AVCaptureVideoOrientation(rawValue: UIDevice.current.orientation.rawValue) else {
-            completion(nil)
-            return
-        }
-
-        let size = frame.size
-
         cameraQueue.sync {
-            takePhoto(output, videoOrientation: orientation, cameraPosition: device.position, cropSize: size) { image in
-                DispatchQueue.main.async() { [weak self] in
-                    self?.isUserInteractionEnabled = true
-                    completion(image)
-                }
+            cameraShotCompletion = completion
+            photoOutput.capturePhoto(with: settings, delegate: self)
+        }
+    }
+    
+    public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        DispatchQueue.main.async() {
+            self.isUserInteractionEnabled = true
+            
+            if error != nil {
+                // TODO: how should the error flow here?
+                self.cameraShotCompletion!(nil)
+                return
             }
+            
+            // Adapted from https://stackoverflow.com/questions/46852521/how-to-generate-an-uiimage-from-avcapturephoto-with-correct-orientation/46896096#46896096
+            // It would be nice to use the orientation from `CGImagePropertyOrientation(rawValue: (photo.metadata[String(kCGImagePropertyOrientation)] as! NSNumber).uint32Value)!`
+            // but it turns out the value is always 6 (CGImagePropertyOrientation.right)
+            let videoOrientation = self.preview.connection!.videoOrientation
+            let orientation: UIImage.Orientation
+            switch videoOrientation {
+            case .portrait:
+                orientation = .right
+            case .portraitUpsideDown:
+                orientation = .left
+            case .landscapeRight:
+                orientation = .up
+            case .landscapeLeft:
+                orientation = .down
+            @unknown default:
+                fatalError("Unknown AVCaptureVideoOrientation: \(String(describing: videoOrientation))")
+            }
+            let cgImage = photo.cgImageRepresentation()!.takeUnretainedValue()
+            let image = UIImage(cgImage: cgImage, scale: 1, orientation: orientation)
+            self.cameraShotCompletion!(image)
         }
     }
     
@@ -178,17 +195,13 @@ public class CameraView: UIView {
             return
         }
         
-        do {
-            try device.lockForConfiguration()
-            if device.flashMode == .on {
-                device.flashMode = .off
-            } else if device.flashMode == .off {
-                device.flashMode = .auto
-            } else {
-                device.flashMode = .on
-            }
-            device.unlockForConfiguration()
-        } catch _ { }
+        if settings.flashMode == .on {
+            settings.flashMode = .off
+        } else if settings.flashMode == .off {
+            settings.flashMode = .auto
+        } else {
+            settings.flashMode = .on
+        }
     }
 
     public func swapCameraInput() {
@@ -200,13 +213,8 @@ public class CameraView: UIView {
         session.beginConfiguration()
         session.removeInput(currentInput)
         
-        if currentInput.device.position == AVCaptureDevice.Position.back {
-            currentPosition = AVCaptureDevice.Position.front
-            device = cameraWithPosition(position: currentPosition)
-        } else {
-            currentPosition = AVCaptureDevice.Position.back
-            device = cameraWithPosition(position: currentPosition)
-        }
+        currentPosition = currentInput.device.position == .back ? .front : .back
+        device = AVCaptureDevice.default(self.deviceType, for: .video, position: self.currentPosition)
         
         guard let newInput = try? AVCaptureDeviceInput(device: device) else {
             return
