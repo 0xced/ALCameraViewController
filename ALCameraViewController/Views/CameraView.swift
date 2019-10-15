@@ -9,17 +9,14 @@
 import UIKit
 import AVFoundation
 
-public typealias CameraShotCompletion = (UIImage?) -> Void
+public typealias CameraShotCompletion = (UIImage?, AVDepthData?) -> Void
 
 public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
     
     var session: AVCaptureSession!
     var input: AVCaptureDeviceInput!
-    var device: AVCaptureDevice!
-    // TODO: how to make this properly configurable?
-    var deviceType: AVCaptureDevice.DeviceType = .builtInDualCamera
-    var settings: AVCapturePhotoSettings!
     var photoOutput: AVCapturePhotoOutput!
+    var settings: AVCapturePhotoSettings!
     var preview: AVCaptureVideoPreviewLayer!
     
     private var cameraShotCompletion: CameraShotCompletion?
@@ -32,25 +29,7 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
         session = AVCaptureSession()
         session.sessionPreset = .photo
 
-        device = AVCaptureDevice.default(self.deviceType, for: AVMediaType.video, position: self.currentPosition)
-
-        do {
-            input = try AVCaptureDeviceInput(device: device)
-        } catch let error as NSError {
-            input = nil
-            print("Error: \(error.localizedDescription)")
-            return
-        }
-
-        if session.canAddInput(input) {
-            session.addInput(input)
-        }
-
-        photoOutput = AVCapturePhotoOutput()
-        session.addOutput(photoOutput)
-
-        settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
-        settings.flashMode = .auto
+        configureSession(position: currentPosition)
 
         cameraQueue.sync {
             session.startRunning()
@@ -71,7 +50,6 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
             settings = nil
             photoOutput = nil
             preview = nil
-            device = nil
         }
     }
     
@@ -86,7 +64,7 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
     }
 
     @objc internal func pinch(gesture: UIPinchGestureRecognizer) {
-        guard let device = device else { return }
+        let device = input.device
 
         // Return zoom value between the minimum and maximum zoom values
         func minMaxZoom(_ factor: CGFloat) -> CGFloat {
@@ -125,6 +103,38 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
         layer.addSublayer(preview)
     }
     
+    private func configureSession(position: AVCaptureDevice.Position) {
+        var preferredDeviceTypes: [AVCaptureDevice.DeviceType] = [.builtInDualCamera, .builtInWideAngleCamera]
+        if #available(iOS 11.1, *) {
+            preferredDeviceTypes.insert(.builtInTrueDepthCamera, at: 0)
+        }
+        let disoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: preferredDeviceTypes, mediaType: .video, position: position)
+        let device = disoverySession.devices.first!
+        
+        session.beginConfiguration()
+        
+        for input in session.inputs {
+            session.removeInput(input)
+        }
+        input = try! AVCaptureDeviceInput(device: device)
+        session.addInput(input)
+        
+        for output in session.outputs {
+            session.removeOutput(output)
+        }
+        photoOutput = AVCapturePhotoOutput()
+        session.addOutput(photoOutput)
+        // The image output must be added to the session _before_ accessing isDepthDataDeliverySupported/isDepthDataDeliveryEnabled https://stackoverflow.com/questions/49302065/iphone-7-ios-11-2-depth-data-delivery-is-not-supported-in-the-current-configu/49308754#49308754
+        // The documentation on https://developer.apple.com/documentation/avfoundation/cameras_and_media_capture/capturing_photos_with_depth is plain wrong (output is added _after_ configuring in the sample code 🙄)
+        photoOutput.isDepthDataDeliveryEnabled = photoOutput.isDepthDataDeliverySupported
+        
+        settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
+        settings.isDepthDataDeliveryEnabled = photoOutput.isDepthDataDeliverySupported
+        settings.flashMode = .auto
+        
+        session.commitConfiguration()
+    }
+    
     public func capturePhoto(completion: @escaping CameraShotCompletion) {
         isUserInteractionEnabled = false
 
@@ -140,36 +150,20 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
             
             if error != nil {
                 // TODO: how should the error flow here?
-                self.cameraShotCompletion!(nil)
+                self.cameraShotCompletion!(nil, nil)
                 return
             }
             
-            // Adapted from https://stackoverflow.com/questions/46852521/how-to-generate-an-uiimage-from-avcapturephoto-with-correct-orientation/46896096#46896096
-            // It would be nice to use the orientation from `CGImagePropertyOrientation(rawValue: (photo.metadata[String(kCGImagePropertyOrientation)] as! NSNumber).uint32Value)!`
-            // but it turns out the value is always 6 (CGImagePropertyOrientation.right)
-            let videoOrientation = self.preview.connection!.videoOrientation
-            let orientation: UIImage.Orientation
-            switch videoOrientation {
-            case .portrait:
-                orientation = .right
-            case .portraitUpsideDown:
-                orientation = .left
-            case .landscapeRight:
-                orientation = .up
-            case .landscapeLeft:
-                orientation = .down
-            @unknown default:
-                fatalError("Unknown AVCaptureVideoOrientation: \(String(describing: videoOrientation))")
-            }
-            let cgImage = photo.cgImageRepresentation()!.takeUnretainedValue()
-            let image = UIImage(cgImage: cgImage, scale: 1, orientation: orientation)
-            self.cameraShotCompletion!(image)
+            let result = photo.getImage(videoOrientation: self.preview.connection!.videoOrientation)
+            self.cameraShotCompletion!(result.image, result.depthData)
+            self.cameraShotCompletion = nil
         }
     }
     
     public func focusCamera(toPoint: CGPoint) -> Bool {
         
-        guard let device = device, let preview = preview, device.isFocusModeSupported(.continuousAutoFocus) else {
+        let device = input.device
+        guard let preview = preview, device.isFocusModeSupported(.continuousAutoFocus) else {
             return false
         }
         
@@ -191,7 +185,7 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
     }
     
     public func cycleFlash() {
-        guard let device = device, device.hasFlash else {
+        guard input.device.hasFlash else {
             return
         }
         
@@ -205,25 +199,8 @@ public class CameraView: UIView, AVCapturePhotoCaptureDelegate {
     }
 
     public func swapCameraInput() {
-        
-        guard let session = session, let currentInput = input else {
-            return
-        }
-        
-        session.beginConfiguration()
-        session.removeInput(currentInput)
-        
-        currentPosition = currentInput.device.position == .back ? .front : .back
-        device = AVCaptureDevice.default(self.deviceType, for: .video, position: self.currentPosition)
-        
-        guard let newInput = try? AVCaptureDeviceInput(device: device) else {
-            return
-        }
-        
-        input = newInput
-        
-        session.addInput(newInput)
-        session.commitConfiguration()
+        currentPosition = input.device.position == .back ? .front : .back
+        configureSession(position: currentPosition)
     }
   
     public func rotatePreview() {

@@ -12,6 +12,12 @@
 		7AD3B52D23521955002BAD73 /* CropOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD3B52C23521955002BAD73 /* CropOverlay.swift */; };
 		7AEE9B1D23536865001D3C59 /* CropOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD3B52C23521955002BAD73 /* CropOverlay.swift */; };
 		7C6AF41F1FB340CA006CB4ED /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7C6AF41E1FB340CA006CB4ED /* LaunchScreen.xib */; };
+		C25B96EE2355BA68009992F6 /* CVPixelBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25B96ED2355BA67009992F6 /* CVPixelBufferExtension.swift */; };
+		C25B96EF2355BCAE009992F6 /* CVPixelBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25B96ED2355BA67009992F6 /* CVPixelBufferExtension.swift */; };
+		C2DC3C7A2355C9AA00E8D07D /* AVDepthDataExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DC3C792355C9AA00E8D07D /* AVDepthDataExtensions.swift */; };
+		C2DC3C7B2355C9AA00E8D07D /* AVDepthDataExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DC3C792355C9AA00E8D07D /* AVDepthDataExtensions.swift */; };
+		C2DC3C7D2355DE6400E8D07D /* AVCapturePhotoExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DC3C7C2355DE6400E8D07D /* AVCapturePhotoExtensions.swift */; };
+		C2DC3C7E2355DE6400E8D07D /* AVCapturePhotoExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DC3C7C2355DE6400E8D07D /* AVCapturePhotoExtensions.swift */; };
 		C40665441C73A47C00EB9751 /* SingleImageSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40665431C73A47C00EB9751 /* SingleImageSaver.swift */; };
 		C40665461C73A94100EB9751 /* CameraGlobals.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40665451C73A94100EB9751 /* CameraGlobals.swift */; };
 		C40665481C73B72D00EB9751 /* SingleImageFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40665471C73B72D00EB9751 /* SingleImageFetcher.swift */; };
@@ -62,6 +68,9 @@
 		7AC96FA11F5B5166003E53F4 /* CroppingParameters.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CroppingParameters.swift; sourceTree = "<group>"; };
 		7AD3B52C23521955002BAD73 /* CropOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropOverlay.swift; sourceTree = "<group>"; };
 		7C6AF41E1FB340CA006CB4ED /* LaunchScreen.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LaunchScreen.xib; sourceTree = "<group>"; };
+		C25B96ED2355BA67009992F6 /* CVPixelBufferExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CVPixelBufferExtension.swift; sourceTree = "<group>"; };
+		C2DC3C792355C9AA00E8D07D /* AVDepthDataExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVDepthDataExtensions.swift; sourceTree = "<group>"; };
+		C2DC3C7C2355DE6400E8D07D /* AVCapturePhotoExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AVCapturePhotoExtensions.swift; sourceTree = "<group>"; };
 		C40665431C73A47C00EB9751 /* SingleImageSaver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleImageSaver.swift; sourceTree = "<group>"; };
 		C40665451C73A94100EB9751 /* CameraGlobals.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraGlobals.swift; sourceTree = "<group>"; };
 		C40665471C73B72D00EB9751 /* SingleImageFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleImageFetcher.swift; sourceTree = "<group>"; };
@@ -156,6 +165,9 @@
 				C4D9BA461CA73163004F70F7 /* UIButtonExtensions.swift */,
 				EBFE097C1CAF1D1A00A8C637 /* UIViewExtensions.swift */,
 				7AC96FA11F5B5166003E53F4 /* CroppingParameters.swift */,
+				C25B96ED2355BA67009992F6 /* CVPixelBufferExtension.swift */,
+				C2DC3C7C2355DE6400E8D07D /* AVCapturePhotoExtensions.swift */,
+				C2DC3C792355C9AA00E8D07D /* AVDepthDataExtensions.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -345,14 +357,17 @@
 				C482A0031CAEB18D00541D08 /* ImageFetcher.swift in Sources */,
 				C482A0041CAEB18D00541D08 /* SingleImageSaver.swift in Sources */,
 				C482A0051CAEB18D00541D08 /* SingleImageFetcher.swift in Sources */,
+				C25B96EE2355BA68009992F6 /* CVPixelBufferExtension.swift in Sources */,
 				1F3C56291F701CA7009667E9 /* CroppingParameters.swift in Sources */,
 				7AEE9B1D23536865001D3C59 /* CropOverlay.swift in Sources */,
 				C482A0061CAEB18D00541D08 /* Utilities.swift in Sources */,
 				C482A0081CAEB18D00541D08 /* CameraGlobals.swift in Sources */,
 				C482A0091CAEB18D00541D08 /* VolumeControl.swift in Sources */,
+				C2DC3C7B2355C9AA00E8D07D /* AVDepthDataExtensions.swift in Sources */,
 				C482A00A1CAEB18D00541D08 /* PhotoLibraryAuthorizer.swift in Sources */,
 				C482A00B1CAEB18D00541D08 /* UIButtonExtensions.swift in Sources */,
 				C482A00C1CAEB18D00541D08 /* PhotoLibraryViewController.swift in Sources */,
+				C2DC3C7E2355DE6400E8D07D /* AVCapturePhotoExtensions.swift in Sources */,
 				C482A00D1CAEB18D00541D08 /* CameraViewController.swift in Sources */,
 				C482A00E1CAEB18D00541D08 /* ConfirmViewController.swift in Sources */,
 				C482A00F1CAEB18D00541D08 /* ImageCell.swift in Sources */,
@@ -366,6 +381,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C44543211CA68DDE00644380 /* VolumeControl.swift in Sources */,
+				C2DC3C7D2355DE6400E8D07D /* AVCapturePhotoExtensions.swift in Sources */,
 				FA7E6B9B1B429012000E1B14 /* ConfirmViewController.swift in Sources */,
 				FA5FA3431B3AFA2B00497C62 /* PermissionsView.swift in Sources */,
 				FAB50BFC1B413E8C009905B9 /* ImageFetcher.swift in Sources */,
@@ -373,6 +389,7 @@
 				FA82313A1B3C296C00A837BE /* Utilities.swift in Sources */,
 				FAB50C001B413E8C009905B9 /* PhotoLibraryViewController.swift in Sources */,
 				FAF058661B316695008E5592 /* CameraViewController.swift in Sources */,
+				C25B96EF2355BCAE009992F6 /* CVPixelBufferExtension.swift in Sources */,
 				7AC96FA21F5B5166003E53F4 /* CroppingParameters.swift in Sources */,
 				C4D9BA451CA7224B004F70F7 /* PhotoLibraryAuthorizer.swift in Sources */,
 				FAB50BFB1B413E8C009905B9 /* ImageCell.swift in Sources */,
@@ -381,6 +398,7 @@
 				FAF058471B31618D008E5592 /* ViewController.swift in Sources */,
 				7AD3B52D23521955002BAD73 /* CropOverlay.swift in Sources */,
 				FAF058681B3175C5008E5592 /* CameraView.swift in Sources */,
+				C2DC3C7A2355C9AA00E8D07D /* AVDepthDataExtensions.swift in Sources */,
 				C4D9BA471CA73163004F70F7 /* UIButtonExtensions.swift in Sources */,
 				C40665461C73A94100EB9751 /* CameraGlobals.swift in Sources */,
 				FAF058451B31618D008E5592 /* AppDelegate.swift in Sources */,

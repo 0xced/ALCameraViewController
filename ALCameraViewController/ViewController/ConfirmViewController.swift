@@ -76,11 +76,13 @@ public class ConfirmViewController: UIViewController {
 
 	let asset: PHAsset?
 	let image: UIImage?
-	
-	public init(image: UIImage, croppingParameters: CroppingParameters) {
+	let depthData: AVDepthData?
+
+	public init(image: UIImage, depthData: AVDepthData?, croppingParameters: CroppingParameters) {
 		self.croppingParameters = croppingParameters
 		self.asset = nil
 		self.image = image
+		self.depthData = depthData
 		super.init(nibName: "ConfirmViewController", bundle: CameraGlobals.shared.bundle)
 	}
 	
@@ -88,6 +90,7 @@ public class ConfirmViewController: UIViewController {
 		self.croppingParameters = croppingParameters
 		self.asset = asset
 		self.image = nil
+		self.depthData = nil
 		super.init(nibName: "ConfirmViewController", bundle: CameraGlobals.shared.bundle)
 	}
 	
@@ -247,7 +250,7 @@ public class ConfirmViewController: UIViewController {
 	}
 	
 	internal func cancel() {
-		onComplete?(nil, nil)
+		onComplete?(nil, nil, nil)
 	}
 	
 	internal func confirmPhoto() {
@@ -265,7 +268,9 @@ public class ConfirmViewController: UIViewController {
 		if let asset = asset {
 			var fetcher = SingleImageFetcher()
 				.onSuccess { [weak self] image in
-					self?.onComplete?(image, self?.asset)
+					self?.hideSpinner()
+                    // TODO: it should be possible to get depth data from library, see https://iyarweb.wordpress.com/2017/11/08/image-depth-maps-tutorial-for-ios-getting-started-2/
+					self?.onComplete?(image, nil, self?.asset)
 					self?.hideSpinner()
 					self?.enable()
 				}
@@ -290,9 +295,10 @@ public class ConfirmViewController: UIViewController {
 				                     width: (image.size.width * cropRect.width),
 				                     height: (image.size.height * cropRect.height))
 				newImage = image.crop(rect: resizedCropRect)
+                // TODO: also crop depthData
 			}
 			
-			onComplete?(newImage, nil)
+			onComplete?(newImage, depthData, nil)
 			hideSpinner()
 			enable()
 		}

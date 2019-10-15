@@ -10,7 +10,7 @@ import UIKit
 import AVFoundation
 import Photos
 
-public typealias CameraViewCompletion = (UIImage?, PHAsset?) -> Void
+public typealias CameraViewCompletion = (UIImage?, AVDepthData?, PHAsset?) -> Void
 
 public extension CameraViewController {
     /// Provides an image picker wrapped inside a UINavigationController instance
@@ -25,9 +25,9 @@ public extension CameraViewController {
         imagePicker.onSelectionComplete = { [weak imagePicker] asset in
             if let asset = asset {
                 let confirmController = ConfirmViewController(asset: asset, croppingParameters: croppingParameters)
-                confirmController.onComplete = { [weak imagePicker] image, asset in
+                confirmController.onComplete = { [weak imagePicker] image, depthData, asset in
                     if let image = image, let asset = asset {
-                        completion(image, asset)
+                        completion(image, depthData, asset)
                     } else {
                         imagePicker?.dismiss(animated: true, completion: nil)
                     }
@@ -35,7 +35,7 @@ public extension CameraViewController {
                 confirmController.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
                 imagePicker?.present(confirmController, animated: true, completion: nil)
             } else {
-                completion(nil, nil)
+                completion(nil, nil, nil)
             }
         }
         
@@ -483,17 +483,17 @@ open class CameraViewController: UIViewController {
         
         if connection.isEnabled {
             toggleButtons(enabled: false)
-            cameraView.capturePhoto { [weak self] image in
+            cameraView.capturePhoto { [weak self] (image, depthData) in
                 guard let image = image else {
                     self?.toggleButtons(enabled: true)
                     return
                 }
-                self?.saveImage(image: image)
+                self?.saveImage(image: image, depthData: depthData)
             }
         }
     }
     
-    internal func saveImage(image: UIImage) {
+    internal func saveImage(image: UIImage, depthData: AVDepthData?) {
         let spinner = showSpinner()
         cameraView.preview.isHidden = true
 
@@ -512,18 +512,18 @@ open class CameraViewController: UIViewController {
             }
             .save()
 		} else {
-			layoutCameraResult(uiImage: image)
+			layoutCameraResult(uiImage: image, depthData: depthData)
 			hideSpinner(spinner)
 		}
     }
 	
     internal func close() {
-        onCompletion?(nil, nil)
+        onCompletion?(nil, nil, nil)
         onCompletion = nil
     }
     
     internal func showLibrary() {
-        let imagePicker = CameraViewController.imagePickerViewController(croppingParameters: croppingParameters) { [weak self] image, asset in
+        let imagePicker = CameraViewController.imagePickerViewController(croppingParameters: croppingParameters) { [weak self] image, depthData, asset in
             defer {
                 self?.dismiss(animated: true, completion: nil)
             }
@@ -532,7 +532,7 @@ open class CameraViewController: UIViewController {
                 return
             }
 
-            self?.onCompletion?(image, asset)
+            self?.onCompletion?(image, depthData, asset)
         }
         
         present(imagePicker, animated: true) { [weak self] in
@@ -555,9 +555,9 @@ open class CameraViewController: UIViewController {
         flashButton.isHidden = cameraView.currentPosition == AVCaptureDevice.Position.front
     }
 	
-	internal func layoutCameraResult(uiImage: UIImage) {
+	internal func layoutCameraResult(uiImage: UIImage, depthData: AVDepthData?) {
 		cameraView.stopSession()
-		startConfirmController(uiImage: uiImage)
+		startConfirmController(uiImage: uiImage, depthData: depthData)
 		toggleButtons(enabled: true)
 	}
 	
@@ -567,9 +567,9 @@ open class CameraViewController: UIViewController {
         toggleButtons(enabled: true)
     }
 	
-	private func startConfirmController(uiImage: UIImage) {
-		let confirmViewController = ConfirmViewController(image: uiImage, croppingParameters: croppingParameters)
-		confirmViewController.onComplete = { [weak self] image, asset in
+	private func startConfirmController(uiImage: UIImage, depthData: AVDepthData?) {
+		let confirmViewController = ConfirmViewController(image: uiImage, depthData: depthData, croppingParameters: croppingParameters)
+		confirmViewController.onComplete = { [weak self] image, depthData, asset in
 			defer {
 				self?.dismiss(animated: true, completion: nil)
 			}
@@ -578,7 +578,7 @@ open class CameraViewController: UIViewController {
 				return
 			}
 			
-			self?.onCompletion?(image, asset)
+			self?.onCompletion?(image, depthData, asset)
 			self?.onCompletion = nil
 		}
 		confirmViewController.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -587,7 +587,7 @@ open class CameraViewController: UIViewController {
 	
     private func startConfirmController(asset: PHAsset) {
         let confirmViewController = ConfirmViewController(asset: asset, croppingParameters: croppingParameters)
-        confirmViewController.onComplete = { [weak self] image, asset in
+        confirmViewController.onComplete = { [weak self] image, depthData, asset in
             defer {
                 self?.dismiss(animated: true, completion: nil)
             }
@@ -596,7 +596,7 @@ open class CameraViewController: UIViewController {
                 return
             }
 
-            self?.onCompletion?(image, asset)
+            self?.onCompletion?(image, depthData, asset)
             self?.onCompletion = nil
         }
         confirmViewController.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
