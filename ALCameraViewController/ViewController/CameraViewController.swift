@@ -158,6 +158,7 @@ open class CameraViewController: UIViewController {
         self.allowsLibraryAccess = allowsLibraryAccess
         self.allowVolumeButtonCapture = allowVolumeButtonCapture
         super.init(nibName: nil, bundle: nil)
+        self.modalPresentationStyle = .fullScreen
         onCompletion = completion
         libraryButton.isEnabled = allowsLibraryAccess
         libraryButton.isHidden = !allowsLibraryAccess

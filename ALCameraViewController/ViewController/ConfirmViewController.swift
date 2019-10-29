@@ -84,6 +84,7 @@ public class ConfirmViewController: UIViewController {
 		self.image = image
 		self.depthData = depthData
 		super.init(nibName: "ConfirmViewController", bundle: CameraGlobals.shared.bundle)
+        self.modalPresentationStyle = .fullScreen
 	}
 	
 	public init(asset: PHAsset, croppingParameters: CroppingParameters) {
@@ -92,6 +93,7 @@ public class ConfirmViewController: UIViewController {
 		self.image = nil
 		self.depthData = nil
 		super.init(nibName: "ConfirmViewController", bundle: CameraGlobals.shared.bundle)
+        self.modalPresentationStyle = .fullScreen
 	}
 	
     public required init?(coder aDecoder: NSCoder) {
