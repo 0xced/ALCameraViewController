@@ -113,6 +113,7 @@ public class ConfirmViewController: UIViewController {
 
 		view.backgroundColor = UIColor.black
 
+        buttonActions()
         loadScrollView()
         loadCropOverlay()
 
@@ -125,7 +126,7 @@ public class ConfirmViewController: UIViewController {
 				.setAsset(asset)
 				.setTargetSize(largestPhotoSize())
 				.onSuccess { [weak self] image in
-					self?.configureWithImage(image)
+                    self?.imageView.image = image
 					self?.hideSpinner()
 					self?.enable()
 				}
@@ -134,7 +135,7 @@ public class ConfirmViewController: UIViewController {
 				}
 				.fetch()
 		} else if let image = image {
-			configureWithImage(image)
+			imageView.image = image
 			hideSpinner()
 			enable()
 		}
@@ -146,6 +147,8 @@ public class ConfirmViewController: UIViewController {
         if isFirstLayout {
             isFirstLayout = false
             activateCropOverlayConstraint()
+            imageView.sizeToFit()
+            prepareScrollView()
             spinner?.center = centeredView.center
         }
     }
@@ -192,14 +195,6 @@ public class ConfirmViewController: UIViewController {
         cropOverlay.isMovable = croppingParameters.allowMoving
         cropOverlay.minimumSize = croppingParameters.minimumSize
     }
-	
-	private func configureWithImage(_ image: UIImage) {
-		buttonActions()
-		
-		imageView.image = image
-		imageView.sizeToFit()
-        prepareScrollView()
-	}
 	
 	private func calculateMinimumScale(_ size: CGSize) -> CGFloat {
 		var _size = size
